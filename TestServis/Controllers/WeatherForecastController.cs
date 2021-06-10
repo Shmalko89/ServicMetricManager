@@ -1,39 +1,67 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace TestServis.Controllers
 {
+    [Route("api/crud")]
     [ApiController]
-    [Route("[controller]")]
-    public class WeatherForecastController : ControllerBase
+
+    public class WheatherForecastController : Controller
     {
-        private static readonly string[] Summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
 
-        private readonly ILogger<WeatherForecastController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        private TempHolder _tempHolder;
+        public WheatherForecastController(TempHolder tempHolder)
         {
-            _logger = logger;
+            _tempHolder = tempHolder;
         }
 
-        [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
+        [HttpPost("create")]
+        public IActionResult Create([FromQuery] int TemperatureC, [FromQuery] DateTime Date)
         {
-            var rng = new Random();
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            _tempHolder.THolder.Add(new WeatherForecast());
+            return Ok();
+        }
+
+        [HttpPut("update")]
+        public IActionResult Update([FromQuery] int UpdateTemperatureC, [FromQuery] DateTime Date, [FromQuery] int NewTemperatureC)
+        {
+            foreach (WeatherForecast data in _tempHolder.THolder)
             {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            })
-            .ToArray();
+                if (data.TemperatureC == UpdateTemperatureC && data.Date == Date)
+                    data.TemperatureC = NewTemperatureC;
+            }
+            return Ok();
         }
+
+        [HttpDelete("delete")]
+        public IActionResult Delete([FromQuery] DateTime from, [FromQuery] DateTime to)
+        {
+            foreach (WeatherForecast data in _tempHolder.THolder.ToList())
+            {
+                if (data.Date >= from && data.Date <= to)
+                {
+                    _tempHolder.THolder.Remove(data);
+                }
+            }
+            return Ok();
+        }
+
+        [HttpGet("read")]
+        public IActionResult Read([FromQuery] DateTime from, [FromQuery] DateTime to)
+        {
+            foreach (WeatherForecast data in _tempHolder.THolder)
+            {
+                return Ok(data.Date >= from && data.Date <= to);
+            }
+            return Ok();
+        }
+
     }
 }
